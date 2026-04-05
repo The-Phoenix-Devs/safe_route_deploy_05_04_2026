@@ -1,0 +1,40 @@
+{
+  "name": "Safe Route - School Bus Tracker",
+  "short_name": "SafeRoute",
+  "description": "Real-time school bus tracking and safety management system",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "categories": ["education", "transportation", "safety"],
+  "icons": [
+    {
+      "src": "/lovable-uploads/5660de73-133f-4d61-aa57-08b2be7b455d.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/lovable-uploads/5660de73-133f-4d61-aa57-08b2be7b455d.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/lovable-uploads/5660de73-133f-4d61-aa57-08b2be7b455d.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "features": [
+    "Real-time location tracking",
+    "Push notifications", 
+    "Offline support",
+    "Student safety alerts",
+    "Biometric authentication",
+    "WebAuthn support"
+  ]
+}

@@ -1,0 +1,129 @@
+
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Student } from './types';
+import { PhotoCapture, PhotoMetadata } from './PhotoCapture';
+import { useVoiceAnnouncements } from '@/hooks/useVoiceAnnouncements';
+import { useToast } from '@/components/ui/use-toast';
+import { Camera, Volume2 } from 'lucide-react';
+interface StudentItemProps {
+  student: Student;
+  isActive: boolean;
+  journeyType?: 'none' | 'pickup' | 'drop';
+  onCheckInOut: (studentId: string) => void | Promise<void>;
+}
+
+const StudentItem: React.FC<StudentItemProps> = ({ student, isActive, journeyType = 'none', onCheckInOut }) => {
+  const [showPhotoCapture, setShowPhotoCapture] = useState(false);
+  const { announceStudentPickup, announceStudentDropoff } = useVoiceAnnouncements();
+  const { toast } = useToast();
+
+  const getStatusText = (student: Student) => {
+    if (student.isOnBoard) {
+      return `Boarded at ${student.boardedAt}`;
+    } else if (student.boardedAt && student.leftAt) {
+      return `Boarded at ${student.boardedAt}, left at ${student.leftAt}`;
+    }
+    return "Not boarded";
+  };
+
+  const handleCheckInOut = async () => {
+    if (journeyType === 'pickup' && !student.isOnBoard) {
+      await announceStudentPickup(student.name, 'N/A');
+    } else if (journeyType === 'drop' && student.isOnBoard) {
+      await announceStudentDropoff(student.name);
+    }
+
+    await onCheckInOut(student.id);
+  };
+
+  const handlePhotoTaken = (photoData: string, metadata: PhotoMetadata) => {
+    // Store photo data (you can implement photo storage service)
+    console.log('Photo taken:', { photoData: photoData.substring(0, 50) + '...', metadata });
+    setShowPhotoCapture(false);
+    
+    toast({
+      title: "Photo Saved",
+      description: `${metadata.action === 'pickup' ? 'Pickup' : 'Drop-off'} photo saved successfully.`
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between p-2 border rounded-md hover:bg-muted/50">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id={`student-${student.id}`}
+            checked={student.isOnBoard}
+            onCheckedChange={handleCheckInOut}
+            disabled={!isActive}
+          />
+          <div>
+            <label htmlFor={`student-${student.id}`} className="font-medium cursor-pointer text-foreground">
+              {student.name}
+            </label>
+            <p className="text-sm text-muted-foreground">Grade: {student.grade}</p>
+            {student.pickupPoint && (
+              <p className="text-xs text-muted-foreground">Pickup: {student.pickupPoint}</p>
+            )}
+          </div>
+        </div>
+        
+        <div className="text-right space-x-2">
+          {/* Photo Capture Button */}
+          {journeyType !== 'none' && isActive && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPhotoCapture(!showPhotoCapture)}
+            >
+              <Camera className="w-4 h-4 mr-1" />
+              Photo
+            </Button>
+          )}
+          
+          <p className={`text-sm ${student.isOnBoard ? 'text-green-600' : 'text-muted-foreground'}`}>
+            {getStatusText(student)}
+          </p>
+          
+          {journeyType !== 'none' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!isActive}
+              onClick={handleCheckInOut}
+            >
+              {journeyType === 'pickup' 
+                ? (student.isOnBoard ? 'Picked Up ✓' : 'Pick Up') 
+                : (student.isOnBoard ? 'On Bus' : 'Drop')
+              }
+            </Button>
+          )}
+          
+          {journeyType === 'none' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!isActive}
+              onClick={handleCheckInOut}
+            >
+              {student.isOnBoard ? 'Check Out' : 'Check In'}
+            </Button>
+          )}
+        </div>
+      </div>
+      
+      {/* Photo Capture Component */}
+      {showPhotoCapture && journeyType !== 'none' && (
+        <PhotoCapture
+          onPhotoTaken={handlePhotoTaken}
+          studentName={student.name}
+          action={journeyType === 'drop' ? 'dropoff' : journeyType}
+        />
+      )}
+    </div>
+  );
+};
+
+export default StudentItem;

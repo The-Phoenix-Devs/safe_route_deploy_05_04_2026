@@ -1,0 +1,68 @@
+
+/* OpenLayers specific styles */
+.ol-control {
+  background-color: rgba(255,255,255,0.4);
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.ol-control button {
+  display: block;
+  margin: 1px;
+  padding: 0;
+  color: white;
+  font-size: 1.14em;
+  font-weight: bold;
+  text-decoration: none;
+  text-align: center;
+  height: 1.375em;
+  width: 1.375em;
+  line-height: .4em;
+  background-color: rgba(0,60,136,0.5);
+  border: none;
+  border-radius: 2px;
+}
+
+.ol-control button:hover {
+  background-color: rgba(0,60,136,0.7);
+}
+
+.ol-zoom {
+  top: .5em;
+  left: .5em;
+}
+
+.bus-marker {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.bus-marker:hover {
+  transform: scale(1.1);
+}
+
+/* Hide any logos, watermarks or overlays */
+.ol-control,
+.ol-attribution,
+.ol-logo,
+[class*="logo"],
+[class*="watermark"],
+[id*="logo"],
+[id*="watermark"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Hide any center overlays that might contain logos */
+.ol-viewport::before,
+.ol-viewport::after,
+.ol-viewport > div::before,
+.ol-viewport > div::after {
+  display: none !important;
+}
+
+/* Override any background images that might contain logos */
+.ol-viewport,
+.ol-viewport > div {
+  background-image: none !important;
+}
