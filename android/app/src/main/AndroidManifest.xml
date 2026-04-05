@@ -32,4 +32,15 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Required for @capacitor/geolocation + WebView navigator.geolocation -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Used by @capacitor/camera when QR / photo flows run -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Android 13+ runtime: Web Push / FCM + local notifications from the WebView -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Voice chat / VoiceRecorder (getUserMedia audio) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Optional: gentle haptics (usually not a runtime prompt) -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 </manifest>

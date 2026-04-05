@@ -81,6 +81,8 @@ class LocationService {
   // Initialize location services (call on app start)
   async initializeLocationServices(): Promise<void> {
     try {
+      const { ensureNativePermissions } = await import('@/services/nativePermissionsBootstrap');
+      await ensureNativePermissions();
       await this.requestLocationPermission();
       console.log('Location services initialized');
     } catch (error) {

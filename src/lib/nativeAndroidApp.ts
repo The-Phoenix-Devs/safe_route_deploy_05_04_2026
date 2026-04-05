@@ -40,6 +40,21 @@ export function isNativeAndroidApp(): boolean {
   return capacitorAndroidFromGlobal() || androidCapacitorUserAgentHint();
 }
 
+/** Short copy when geolocation is denied or unavailable (Capacitor app vs browser). */
+export function locationPermissionHelpText(): string {
+  if (typeof window === "undefined") {
+    return "Please enable location services.";
+  }
+  try {
+    if (Capacitor.isNativePlatform()) {
+      return "Map shows the school area until GPS works. Allow Location for Safe Route in your device Settings → Apps.";
+    }
+  } catch {
+    /* ignore */
+  }
+  return "Map shows the school area until GPS works. Allow location for this site in your browser settings.";
+}
+
 /** Hide “Admin sign-in” on the login screen (Android app + optional env). */
 export function shouldHideAdminLoginLink(): boolean {
   if (process.env.NEXT_PUBLIC_HIDE_ADMIN_LOGIN_LINK === "1") return true;

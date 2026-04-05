@@ -37,6 +37,8 @@ import {
 } from "@/components/layout/MobileDashboardFeatureNav";
 import { logGuardianActivity } from '@/services/userLogService';
 import { registerGuardianWebPush } from '@/services/guardianPushService';
+import { Capacitor } from "@capacitor/core";
+import { locationPermissionHelpText } from "@/lib/nativeAndroidApp";
 
 const GUARDIAN_NAV_FULL: DashboardNavItem[] = [
   { id: "section-g-notices", label: "Notices", icon: CalendarDays },
@@ -157,28 +159,55 @@ const GuardianDashboard: React.FC = () => {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [user, correctProfileId, user?.username, user?.id]);
 
-  // Get the guardian's current location
+  // Get the guardian's current location (Capacitor: request OS permission before WebView geolocation)
   useEffect(() => {
-    if (navigator.geolocation) {
-      const watchId = navigator.geolocation.watchPosition(
+    let watchId: number | null = null;
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const { ensureNativePermissions } = await import("@/services/nativePermissionsBootstrap");
+        await ensureNativePermissions();
+      } catch (e) {
+        console.warn("ensureNativePermissions:", e);
+      }
+      if (cancelled) return;
+      if (!navigator.geolocation) {
+        setLocationError("Geolocation is not supported by this browser.");
+        return;
+      }
+      watchId = navigator.geolocation.watchPosition(
         (position) => {
           setGuardianLocation({
             latitude: position.coords.latitude,
-            longitude: position.coords.longitude
+            longitude: position.coords.longitude,
           });
           setLocationError(null);
         },
         (error) => {
           console.error("Error getting location:", error);
-          setLocationError("Unable to access your location. Please enable location services.");
+          const denied =
+            error && typeof error === "object" && "code" in error && (error as GeolocationPositionError).code === 1;
+          if (denied) {
+            setLocationError(locationPermissionHelpText());
+          } else {
+            setLocationError(
+              Capacitor.isNativePlatform()
+                ? "Unable to get a GPS fix. Try moving outdoors or check that device location is on."
+                : "Unable to access your location. Please enable location services.",
+            );
+          }
         },
-        { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
+        { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 },
       );
+    };
 
-      return () => navigator.geolocation.clearWatch(watchId);
-    } else {
-      setLocationError("Geolocation is not supported by this browser.");
-    }
+    void run();
+
+    return () => {
+      cancelled = true;
+      if (watchId != null) navigator.geolocation.clearWatch(watchId);
+    };
   }, []);
 
   // Redirect if no user (only after loading is complete)

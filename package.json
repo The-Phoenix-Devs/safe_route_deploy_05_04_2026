@@ -24,7 +24,8 @@
     "cap:open:android": "npx cap open android",
     "icons:generate": "node scripts/generate-brand-assets.mjs",
     "cap:assets:android": "npm run icons:generate && npx capacitor-assets generate --android",
-    "android:bundle": "npm run build:static && npx cap sync android"
+    "android:bundle": "npm run build:static && npx cap sync android",
+    "android:open": "npm run android:bundle && npx cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.2",

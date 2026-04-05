@@ -38,6 +38,7 @@ import { SchoolServiceCalendarCard } from '@/components/ui/SchoolServiceCalendar
 import { DriverQuickStatus } from '@/components/driver/DriverQuickStatus';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { isSecureBrowserContext, insecureContextHelpMessage } from "@/utils/browserFeatures";
+import { locationPermissionHelpText } from "@/lib/nativeAndroidApp";
 
 /** Default map center (Hooghly area) when GPS is denied or unavailable */
 const DEFAULT_DRIVER_MAP_CENTER = { lat: 22.783014, lng: 87.773584 };
@@ -56,7 +57,7 @@ function describeTrackingFailure(err: unknown): string {
   if (err && typeof err === "object" && "code" in err) {
     const code = (err as GeolocationPositionError).code;
     if (code === 1) {
-      return "Location permission denied. Allow location for this site in the browser or app settings.";
+      return `Location permission denied. ${locationPermissionHelpText()}`;
     }
     if (code === 2) {
       return "Position unavailable. Try outdoors or enable device location services.";
@@ -116,48 +117,62 @@ const DriverDashboard: React.FC = () => {
   useEffect(() => {
     if (!navigator.geolocation) return;
 
-    const id = navigator.geolocation.watchPosition(
-      (position) => {
-        setLocation(position);
-        const dd = driverDataRef.current;
-        if (dd) {
-          setDriverLocations([
-            {
-              driverId: dd.id,
-              driverName: dd.name,
-              busNumber: dd.bus_number,
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-              timestamp: new Date(),
-              isActive: tripActiveRef.current,
-            },
-          ]);
-        }
-      },
-      (geoErr) => {
-        console.warn("Geolocation:", geoErr?.message || geoErr);
-        if (!locationToastShown.current) {
-          locationToastShown.current = true;
-          const insecure = !isSecureBrowserContext();
-          toast({
-            title: insecure ? "GPS needs HTTPS on phone" : "Location off",
-            description: insecure
-              ? insecureContextHelpMessage()
-              : "Map shows the school area. Allow location for this site in browser settings.",
-            variant: "destructive",
-          });
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 30000,
-      },
-    );
-    setWatchId(id);
+    let id: number | null = null;
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const { ensureNativePermissions } = await import("@/services/nativePermissionsBootstrap");
+        await ensureNativePermissions();
+      } catch (e) {
+        console.warn("ensureNativePermissions:", e);
+      }
+      if (cancelled) return;
+
+      id = navigator.geolocation.watchPosition(
+        (position) => {
+          setLocation(position);
+          const dd = driverDataRef.current;
+          if (dd) {
+            setDriverLocations([
+              {
+                driverId: dd.id,
+                driverName: dd.name,
+                busNumber: dd.bus_number,
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+                timestamp: new Date(),
+                isActive: tripActiveRef.current,
+              },
+            ]);
+          }
+        },
+        (geoErr) => {
+          console.warn("Geolocation:", geoErr?.message || geoErr);
+          if (!locationToastShown.current) {
+            locationToastShown.current = true;
+            const insecure = !isSecureBrowserContext();
+            toast({
+              title: insecure ? "GPS needs HTTPS on phone" : "Location off",
+              description: insecure ? insecureContextHelpMessage() : locationPermissionHelpText(),
+              variant: "destructive",
+            });
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 30000,
+        },
+      );
+      setWatchId(id);
+    };
+
+    void run();
 
     return () => {
-      navigator.geolocation.clearWatch(id);
+      cancelled = true;
+      if (id != null) navigator.geolocation.clearWatch(id);
     };
   }, []);
 
